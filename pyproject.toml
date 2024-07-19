@@ -1,0 +1,47 @@
+[project]
+name = "unmerdify"
+version = "0.1.0"
+description = "Get the content, only the content: unenshittificator for the web"
+authors = [
+    { name = "Vincent Jousse", email = "vincent@jousse.org" }
+]
+dependencies = [
+    "pytest>=8.2.2",
+]
+readme = "README.md"
+requires-python = ">= 3.11"
+
+classifiers = [
+  # How mature is this project? Common values are
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 3 - Alpha",
+
+  "Intended Audience :: Developers",
+
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Internet :: WWW/HTTP",
+
+  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)"
+]
+
+[project.scripts]
+"unmerdify" = "unmerdify:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "pytest>=8.2.2",
+]
+universal = true
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/unmerdify"]
