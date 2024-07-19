@@ -10,13 +10,33 @@
 #   universal: true
 
 -e file:.
+cfgv==3.4.0
+    # via pre-commit
 colorama==0.4.6 ; sys_platform == 'win32'
     # via pytest
+distlib==0.3.8
+    # via virtualenv
+filelock==3.15.4
+    # via virtualenv
+identify==2.6.0
+    # via pre-commit
 iniconfig==2.0.0
     # via pytest
+nodeenv==1.9.1
+    # via pre-commit
 packaging==24.1
     # via pytest
+platformdirs==4.2.2
+    # via virtualenv
 pluggy==1.5.0
     # via pytest
+pre-commit==3.7.1
 pytest==8.2.2
     # via unmerdify
+pyyaml==6.0.1
+    # via pre-commit
+toml==0.10.2
+    # via toml-to-requirements
+toml-to-requirements==0.3.0
+virtualenv==20.26.3
+    # via pre-commit
