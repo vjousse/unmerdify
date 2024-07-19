@@ -29,3 +29,7 @@ Manage your Python version, your virtualenv the way you want to and install the 
 - Site configs: https://github.com/fivefilters/ftr-site-config
 - Testing reports of the five filters rules: https://siteconfig.fivefilters.org/test/
 - PHP code using the fivefilters files: https://github.com/j0k3r/graby/blob/1281bf3d7045d2f2682d1af6ba3715e492184e9a/src/Extractor/ContentExtractor.php#L142
+
+# Ideas
+
+Should we clean urls in the parsed html? https://github.com/ClearURLs/Rules
