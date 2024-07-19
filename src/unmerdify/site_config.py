@@ -34,6 +34,15 @@ def get_host_for_url(url: str) -> str:
 def get_possible_config_file_names_for_host(
     host: str, file_extension: str = ".txt"
 ) -> list[str]:
+    """
+    The five filters config files can be of the form
+
+    - .specific.domain.tld (for *.specific.domain.tld)
+    - specific.domain.tld (for this specific domain)
+    - .domain.tld (for *.domain.tld)
+    - domain.tld (for domain.tld)
+    """
+
     parts = host.split(".")
 
     if len(parts) < 2:
