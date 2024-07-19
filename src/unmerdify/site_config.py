@@ -1,5 +1,6 @@
 import glob
 from urllib.parse import urlparse
+import re
 
 
 def get_config_files(
@@ -79,12 +80,92 @@ def get_config_file_for_host(config_files: list[str], host: str) -> str | None:
                 return config_file
 
 
+def parse_site_config_file(config_file_path: str) -> dict | None:
+    config = {}
+    with open(config_file_path, "r") as file:
+        while line := file.readline():
+            line = line.strip()
+
+            # skip comments, empty lines
+            if line == "" or line.startswith("#"):
+                continue
+
+            # Split on ": "
+            parts = re.split(r": ", line)
+
+            # if the line doesn't respect the `command: value` format
+            # skip it
+            if not len(parts) == 2:
+                print(f"skipping {line}")
+                continue
+
+            command = parts[0].strip()
+            value = parts[1].strip()
+
+            # strip_attr is now an alias for strip, for example:
+            # strip_attr: //img/@srcset
+            if "strip_attr" == command:
+                command = "strip"
+
+            # check for commands where we accept multiple statements
+            if command in [
+                "title",
+                "body",
+                "strip",
+                "strip_id_or_class",
+                "strip_image_src",
+                "single_page_link",
+                "next_page_link",
+                "test_url",
+                "find_string",
+                "replace_string",
+                "login_extra_fields",
+                "native_ad_clue",
+                "date",
+                "author",
+            ]:
+                config.setdefault(command, []).append(value)
+
+            # check for single statement commands that evaluate to true or false
+            elif command in [
+                "tidy",
+                "prune",
+                "autodetect_on_failure",
+                "requires_login",
+                "skip_json_ld",
+            ]:
+                config[command] = "yes" == value or "true" == value
+
+            # check for single statement commands stored as strings
+            elif command in [
+                "parser",
+                "login_username_field",
+                "login_password_field",
+                "not_logged_in_xpath",
+                "login_uri",
+                "src_lazy_load_attr",
+            ]:
+                config[command] = value
+
+            # check for replace_string(find): replace
+            elif command.endswith(")") and command.startswith("replace_string("):
+                result = re.search(r"^replace_string\((.*)\)$", command)
+                if result:
+                    config.setdefault("find_string", []).append(result.group(1))
+                    config.setdefault("replace_string", []).append(value)
+    import json
+
+    print(json.dumps(config, indent=4))
+    return config if config != {} else None
+
+
 def load_site_config_for_host(config_files: list[str], host: str):
     print(f"-> Loading site config for {host}")
     config_file = get_config_file_for_host(config_files, host)
 
     if config_file:
         print(f"-> Found config file, loading {config_file} config.")
+        parse_site_config_file(config_file)
     else:
         print(f"-> No config file found for host {host}.")
 
