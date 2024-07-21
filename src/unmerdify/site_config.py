@@ -3,6 +3,10 @@ import re
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
+import logging
+
+LOGGER = logging.getLogger(__name__)
+
 
 @dataclass
 class Command:
@@ -147,7 +151,9 @@ def parse_site_config_file(config_file_path: str) -> dict | None:
             result = pattern.search(line)
 
             if not result:
-                print(f"-> 🚨 ERROR: unknown line format for line `{line}`. Skipping.")
+                logging.error(
+                    f"-> 🚨 ERROR: unknown line format for line `{line}`. Skipping."
+                )
                 continue
 
             command_name = result.group(1).lower()
@@ -162,7 +168,9 @@ def parse_site_config_file(config_file_path: str) -> dict | None:
             command = COMMANDS_PER_NAME.get(command_name)
 
             if command is None:
-                print(f"-> 🚨 ERROR: unknown command name for line `{line}`. Skipping.")
+                logging.error(
+                    f"-> 🚨 ERROR: unknown command name for line `{line}`. Skipping."
+                )
                 continue
 
             # Check for commands where we accept multiple statements but we don't have args provided
@@ -212,9 +220,6 @@ def parse_site_config_file(config_file_path: str) -> dict | None:
 
             previous_command = command
 
-    import json
-
-    print(json.dumps(config, indent=4))
     return config if config != {} else None
 
 
