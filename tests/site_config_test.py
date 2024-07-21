@@ -4,11 +4,11 @@ from unmerdify import site_config
 def test_get_config_files(site_config_dir):
     full_files = site_config.get_config_files(site_config_dir)
 
-    assert len(full_files) == 2
+    assert len(full_files) == 3
 
     files = site_config.get_config_files(site_config_dir, include_config_dir=False)
 
-    assert files == [".wikipedia.org.txt", "blast-info.fr.txt"]
+    assert files == [".wikipedia.org.txt", "blast-info.fr.txt", ".test.com.txt"]
 
 
 def test_get_possible_config_files_for_host():
