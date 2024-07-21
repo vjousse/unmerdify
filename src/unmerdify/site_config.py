@@ -77,6 +77,7 @@ def get_config_files(
         else:
             filenames.append(file.removeprefix(f"{site_config_dir}/"))
 
+    filenames.sort()
     return filenames
 
 

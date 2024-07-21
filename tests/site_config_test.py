@@ -1,6 +1,6 @@
-from unmerdify import site_config
-
 import logging
+
+from unmerdify import site_config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ def test_get_config_files(site_config_dir):
 
     files = site_config.get_config_files(site_config_dir, include_config_dir=False)
 
-    assert files == [".wikipedia.org.txt", "blast-info.fr.txt", ".test.com.txt"]
+    assert files == [".test.com.txt", ".wikipedia.org.txt", "blast-info.fr.txt"]
 
 
 def test_get_possible_config_files_for_host():
