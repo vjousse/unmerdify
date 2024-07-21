@@ -1,6 +1,55 @@
 import glob
-from urllib.parse import urlparse
 import re
+from dataclasses import dataclass
+from urllib.parse import urlparse
+
+
+@dataclass
+class Command:
+    """Class for keeping track of a command item."""
+
+    name: str
+    accept_multiple_values: bool = False
+    is_bool: bool = False
+    xpath_value: bool = False
+    has_capture_group: bool = False
+    special_command: bool = False
+
+
+COMMANDS: list[Command] = [
+    Command("author", accept_multiple_values=True),
+    Command("autodetect_on_failure", is_bool=True),
+    Command("body", accept_multiple_values=True),
+    Command("date", accept_multiple_values=True),
+    Command("find_string", accept_multiple_values=True),
+    Command("http_header", has_capture_group=True, special_command=True),
+    Command("if_page_contains", special_command=True),
+    Command("login_extra_fields", accept_multiple_values=True),
+    Command("login_password_field"),
+    Command("login_uri"),
+    Command("login_username_field"),
+    Command("native_ad_clue", accept_multiple_values=True),
+    Command("next_page_link", accept_multiple_values=True),
+    Command("not_logged_in_xpath"),
+    Command("parser"),
+    Command("prune", is_bool=True),
+    Command("replace_string", has_capture_group=True, accept_multiple_values=True),
+    Command("requires_login", is_bool=True),
+    Command("src_lazy_load_attr"),
+    Command("single_page_link", accept_multiple_values=True),
+    Command("skip_json_ld", is_bool=True),
+    Command("strip", accept_multiple_values=True),
+    Command("strip_id_or_class", accept_multiple_values=True),
+    Command("strip_image_src", accept_multiple_values=True),
+    Command("test_url", accept_multiple_values=True),
+    Command("tidy", is_bool=True),
+    Command("title", accept_multiple_values=True),
+    Command("wrap_in", has_capture_group=True, special_command=True),
+]
+
+COMMANDS_PER_NAME: dict[str, Command] = {
+    COMMANDS[i].name: COMMANDS[i] for i in range(0, len(COMMANDS))
+}
 
 
 def get_config_files(
@@ -83,6 +132,7 @@ def get_config_file_for_host(config_files: list[str], host: str) -> str | None:
 def parse_site_config_file(config_file_path: str) -> dict | None:
     config = {}
     with open(config_file_path, "r") as file:
+        previous_command = None
         while line := file.readline():
             line = line.strip()
 
@@ -90,69 +140,78 @@ def parse_site_config_file(config_file_path: str) -> dict | None:
             if line == "" or line.startswith("#"):
                 continue
 
-            # Split on ": "
-            parts = re.split(r": ", line)
+            command_name = None
+            command_value = None
+            pattern = re.compile(r"^([a-z_]+)(?:\((.*)\))*:[ ]*(.*)$", re.I)
 
-            # if the line doesn't respect the `command: value` format
-            # skip it
-            if not len(parts) == 2:
-                print(f"skipping {line}")
+            result = pattern.search(line)
+
+            if not result:
+                print(f"-> 🚨 ERROR: unknown line format for line `{line}`. Skipping.")
                 continue
 
-            command = parts[0].strip()
-            value = parts[1].strip()
+            command_name = result.group(1).lower()
+            command_arg = result.group(2)
+            command_value = result.group(3)
 
             # strip_attr is now an alias for strip, for example:
             # strip_attr: //img/@srcset
-            if "strip_attr" == command:
-                command = "strip"
+            if "strip_attr" == command_name:
+                command_name = "strip"
 
-            # check for commands where we accept multiple statements
-            if command in [
-                "title",
-                "body",
-                "strip",
-                "strip_id_or_class",
-                "strip_image_src",
-                "single_page_link",
-                "next_page_link",
-                "test_url",
-                "find_string",
-                "replace_string",
-                "login_extra_fields",
-                "native_ad_clue",
-                "date",
-                "author",
-            ]:
-                config.setdefault(command, []).append(value)
+            command = COMMANDS_PER_NAME.get(command_name)
 
-            # check for single statement commands that evaluate to true or false
-            elif command in [
-                "tidy",
-                "prune",
-                "autodetect_on_failure",
-                "requires_login",
-                "skip_json_ld",
-            ]:
-                config[command] = "yes" == value or "true" == value
+            if command is None:
+                print(f"-> 🚨 ERROR: unknown command name for line `{line}`. Skipping.")
+                continue
 
-            # check for single statement commands stored as strings
-            elif command in [
-                "parser",
-                "login_username_field",
-                "login_password_field",
-                "not_logged_in_xpath",
-                "login_uri",
-                "src_lazy_load_attr",
-            ]:
-                config[command] = value
+            # Check for commands where we accept multiple statements but we don't have args provided
+            # It handles `replace_string: value` and not `replace_string(test): value`
+            if (
+                command.accept_multiple_values
+                and command_arg is None
+                and not command.special_command
+            ):
+                config.setdefault(command_name, []).append(command_value)
+            # Single value command that should evaluate to a bool
+            elif command.is_bool and not command.special_command:
+                config[command_name] = "yes" == command_value or "true" == command_value
+            # handle replace_string(test): value
+            elif command.name == "replace_string" and command_arg is not None:
+                config.setdefault("find_string", []).append(command_arg)
+                config.setdefault("replace_string", []).append(command_value)
+            # handle http_header(user-agent): Mozilla/5.2
+            elif command.name == "http_header" and command_arg is not None:
+                config.setdefault("http_header", []).append(
+                    {command_arg: command_value}
+                )
+            # handle if_page_contains: Xpath value
+            elif command.name == "if_page_contains":
+                # Previous command should be applied only if this expression is true
+                previous_command_value = config[previous_command.name]
 
-            # check for replace_string(find): replace
-            elif command.endswith(")") and command.startswith("replace_string("):
-                result = re.search(r"^replace_string\((.*)\)$", command)
-                if result:
-                    config.setdefault("find_string", []).append(result.group(1))
-                    config.setdefault("replace_string", []).append(value)
+                # Move the previous command into the "if_page_contains" command
+                if (
+                    previous_command.accept_multiple_values
+                    and len(previous_command_value) > 0
+                ):
+                    config.setdefault("if_page_contains", {})[command_value] = {
+                        previous_command.name: previous_command_value.pop()
+                    }
+
+                # Remove the entire key entry if the values are now empty
+                if len(previous_command_value) == 0:
+                    config.pop(previous_command.name)
+
+            # handle if_page_contains: Xpath value
+            elif command.name == "wrap_in":
+                config.setdefault("wrap_in", []).append({command_arg: command_value})
+
+            else:
+                config[command_name] = command_value
+
+            previous_command = command
+
     import json
 
     print(json.dumps(config, indent=4))
