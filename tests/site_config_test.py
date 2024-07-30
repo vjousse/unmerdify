@@ -93,9 +93,25 @@ def test_parse_site_config_file(test_site_config_path, caplog):
         "prune": False,
         "tidy": False,
         "test_url": [
-            "http://en.wikipedia.org/wiki/Christopher_Lloyd",
-            "https://en.wikipedia.org/wiki/Ronnie_James_Dio",
-            "https://en.wikipedia.org/wiki/Metallica",
+            {
+                "test_url": "http://en.wikipedia.org/wiki/Christopher_Lloyd",
+                "test_contains": [],
+            },
+            {
+                "test_url": "https://en.wikipedia.org/wiki/Ronnie_James_Dio",
+                "test_contains": [],
+            },
+            {
+                "test_url": "https://en.wikipedia.org/wiki/Metallica",
+                "test_contains": [],
+            },
+            {
+                "test_url": "http://www.theguardian.com/world/2013/oct/04/nsa-gchq-attack-tor-network-encryption",
+                "test_contains": [
+                    "The National Security Agency has made repeated attempts to develop",
+                    "The agency did not directly address those questions, instead providing a statement.",
+                ],
+            },
         ],
     }
 

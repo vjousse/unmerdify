@@ -1,9 +1,8 @@
 import glob
+import logging
 import re
 from dataclasses import dataclass
 from urllib.parse import urlparse
-
-import logging
 
 LOGGER = logging.getLogger(__name__)
 
@@ -18,6 +17,7 @@ class Command:
     xpath_value: bool = False
     has_capture_group: bool = False
     special_command: bool = False
+    ignore: bool = False
 
 
 COMMANDS: list[Command] = [
@@ -45,7 +45,8 @@ COMMANDS: list[Command] = [
     Command("strip", accept_multiple_values=True),
     Command("strip_id_or_class", accept_multiple_values=True),
     Command("strip_image_src", accept_multiple_values=True),
-    Command("test_url", accept_multiple_values=True),
+    Command("test_contains", special_command=True),
+    Command("test_url", accept_multiple_values=True, special_command=True),
     Command("tidy", is_bool=True),
     Command("title", accept_multiple_values=True),
     Command("wrap_in", has_capture_group=True, special_command=True),
@@ -153,7 +154,7 @@ def parse_site_config_file(config_file_path: str) -> dict | None:
 
             if not result:
                 logging.error(
-                    f"-> 🚨 ERROR: unknown line format for line `{line}`. Skipping."
+                    f"-> 🚨 ERROR: unknown line format for line `{line}` in file `{config_file_path}`. Skipping."
                 )
                 continue
 
@@ -170,7 +171,7 @@ def parse_site_config_file(config_file_path: str) -> dict | None:
 
             if command is None:
                 logging.error(
-                    f"-> 🚨 ERROR: unknown command name for line `{line}`. Skipping."
+                    f"-> 🚨 ERROR: unknown command name for line `{line}` in file `{config_file_path}`. Skipping."
                 )
                 continue
 
@@ -215,7 +216,19 @@ def parse_site_config_file(config_file_path: str) -> dict | None:
             # handle if_page_contains: Xpath value
             elif command.name == "wrap_in":
                 config.setdefault("wrap_in", []).append({command_arg: command_value})
+            elif command.name == "test_url":
+                config.setdefault("test_url", []).append(
+                    {command.name: command_value, "test_contains": []}
+                )
+            elif command.name == "test_contains":
+                test_url = config.get("test_url")
+                if test_url is None or len(test_url) == 0:
+                    logging.error(
+                        "-> 🚨 ERROR: No test_url found for given test_contains. Skipping."
+                    )
+                    continue
 
+                test_url[-1]["test_contains"].append(command_value)
             else:
                 config[command_name] = command_value
 

@@ -28,6 +28,7 @@ classifiers = [
 
 [project.scripts]
 "unmerdify" = "unmerdify:main"
+"ftr_config_check" = "unmerdify.ftr_config_check:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -47,3 +48,6 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/unmerdify"]
+
+[tool.ruff]
+extend-select = ["I"]
