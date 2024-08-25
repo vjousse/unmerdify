@@ -4,12 +4,16 @@ Get the content, only the content: **unenshittificator** for the web.
 
 # Installation
 
+## `ftr-site-config`
+
+First you will need to clone https://github.com/fivefilters/ftr-site-config locally (it contains the rules needed for this code to work).
+
 ## Using `rye`
 
 Be sure to have [`rye`](https://rye.astral.sh/) installed, then:
 
     rye sync
-    rye run unmerdify ../ftr-site-config https://en.wikipedia.org/wiki/Metallica
+    rye run unmerdify /path/to/ftr-site-config https://en.wikipedia.org/wiki/Metallica
 
 Why `rye`? Because after using `cargo` for Rust, I'm now tired of using broken Python version management. `requirements.txt` sucks, managing multiple venvs sucks, managing multiple Python versions sucks, using `pyproject.toml` and `rye` is the way to go. If you still want to manage all this mess yourself, I'll try to keep a `requirements.txt` file up to date.
 
@@ -18,7 +22,7 @@ Why `rye`? Because after using `cargo` for Rust, I'm now tired of using broken P
 Manage your Python version, your virtualenv the way you want to and install the requirements.
 
     pip install -r requirements.txt
-    python src/unmerdify ../ftr-site-config https://en.wikipedia.org/wiki/Metallica
+    python src/unmerdify /path/to/ftr-site-config https://en.wikipedia.org/wiki/Metallica
 
 # Tests
 
